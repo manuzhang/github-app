@@ -11,8 +11,8 @@ object SearchRepos extends RestApp {
   override def run(conf: Conf): Unit = {
     implicit val executionContext = ExecutionContext.global
 
-    languages.foreach { lang =>
-      val f = Future {
+    val futures = languages.map { lang =>
+      Future {
         blocking {
           get("search/repositories",
             conf,
@@ -38,7 +38,7 @@ object SearchRepos extends RestApp {
                 Try(topics.obj("names").arr.map(_.str).toList)
                   .getOrElse(List.empty[String]))
             } match {
-              case Success(kv) => kv
+              case Success(repo) => repo
               case Failure(e) =>
                 throw e
             }
@@ -46,15 +46,16 @@ object SearchRepos extends RestApp {
         }
         Future.sequence(fs)
       }
+    }
 
-      val json = Await.result(f, Duration.Inf).collect {
+    val reposLists = Await.result(Future.sequence(futures), Duration.Inf)
+    reposLists.indices.foreach { i =>
+      val json = reposLists(i).collect {
         case repo: Repo if repo.valid =>
           repo.jsonObj
       }.render(indent = 2)
-
-      os.write.over(os.pwd / s"result-$lang.json", json)
+      val lang = languages(i)
+      os.write.over(os.pwd / s"rest-$lang.json", json)
     }
   }
-
-
 }
