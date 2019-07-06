@@ -3,10 +3,9 @@ package io.github.manuzhang
 import org.rogach.scallop.ScallopConf
 import ujson.Value.Value
 
-trait GitHubApp extends App {
+trait RestApp extends App {
 
   val endpoint = "https://api.github.com"
-
 
   class Conf(arguments: Seq[String]) extends ScallopConf(arguments) {
     val clientSecret = opt[String](required = true)

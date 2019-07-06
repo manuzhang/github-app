@@ -1,19 +1,14 @@
 package io.github.manuzhang
 
-import ujson.Obj
-
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future, blocking}
 import scala.util.{Failure, Success, Try}
 
-object SearchRepos extends GitHubApp {
+import Utils._
+
+object SearchRepos extends RestApp {
 
   override def run(conf: Conf): Unit = {
-
-    val languages = List(
-      "Scala", "Java", "Python", "JavaScript", "Go",
-      "C++", "HTML", "Shell", "Jupyter Notebook", "C")
-
     implicit val executionContext = ExecutionContext.global
 
     languages.foreach { lang =>
@@ -61,15 +56,5 @@ object SearchRepos extends GitHubApp {
     }
   }
 
-  case class Repo(fullName: String, readme: String, topics: List[String]) {
 
-    def jsonObj: Obj = {
-      ujson.Obj("name" -> fullName, "readme" -> readme, "topics" -> topics)
-    }
-
-    def valid: Boolean = {
-      readme.nonEmpty && topics.nonEmpty
-    }
-
-  }
 }
