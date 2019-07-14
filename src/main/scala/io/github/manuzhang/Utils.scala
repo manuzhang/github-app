@@ -1,6 +1,7 @@
 package io.github.manuzhang
 
-import ujson.Obj
+import upickle.default._
+import ujson.Value
 
 object Utils {
 
@@ -8,10 +9,12 @@ object Utils {
     "Scala", "Java", "Python", "JavaScript", "Go",
     "C++", "HTML", "Shell", "Jupyter Notebook", "C")
 
-  case class Repo(fullName: String, readme: String, topics: List[String]) {
+  case class Repo(fullName: String, description: String = "",
+      readme: String = "", topics: List[String] = List.empty[String]) {
 
-    def jsonObj: Obj = {
-      ujson.Obj("name" -> fullName, "readme" -> readme, "topics" -> topics)
+    def json: Value = {
+      implicit val writer: Writer[Repo] = macroW[Repo]
+      upickle.default.writeJs(this)
     }
 
     def valid: Boolean = {

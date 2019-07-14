@@ -34,7 +34,7 @@ object SearchRepos extends RestApp {
             }
           }.map { case (readme, topics) =>
             Try {
-              Repo(fullName, Try(readme.obj("content").str).getOrElse(""),
+              Repo(fullName, "", Try(readme.obj("content").str).getOrElse(""),
                 Try(topics.obj("names").arr.map(_.str).toList)
                   .getOrElse(List.empty[String]))
             } match {
@@ -52,7 +52,7 @@ object SearchRepos extends RestApp {
     reposLists.indices.foreach { i =>
       val json = reposLists(i).collect {
         case repo: Repo if repo.valid =>
-          repo.jsonObj
+          repo.json
       }.render(indent = 2)
       val lang = languages(i)
       os.write.over(os.pwd / s"rest-$lang.json", json)

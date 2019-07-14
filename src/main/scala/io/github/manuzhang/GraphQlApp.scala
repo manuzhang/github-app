@@ -20,6 +20,7 @@ object GraphQlApp extends App {
             node {
               ... on Repository {
                 nameWithOwner
+                description
                 stargazers {
                   totalCount
                 }
@@ -77,6 +78,7 @@ object GraphQlApp extends App {
         lang -> ujson.read(response.text()).obj("data").obj("search").obj("edges").arr.map { edge =>
           val node = edge.obj("node")
           Repo(fullName = node.obj("nameWithOwner").str,
+            description = node.obj("description").str,
             readme = Try(node.obj("object").obj("text").str).getOrElse(""),
             topics = Try(node.obj("repositoryTopics").obj("edges").arr.map { edge =>
               edge.obj("node").obj("topic").obj("name").str
@@ -90,7 +92,7 @@ object GraphQlApp extends App {
   Await.result(Future.sequence(fs), Duration.Inf).foreach { case (lang, repos) =>
     val json = repos.collect {
       case repo: Repo if repo.valid =>
-        repo.jsonObj
+        repo.json
     }.render(indent = 2)
 
     os.write.over(os.pwd / s"graphql-$lang.json", json)
