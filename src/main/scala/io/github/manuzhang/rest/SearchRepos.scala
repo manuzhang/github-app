@@ -1,10 +1,10 @@
-package io.github.manuzhang
+package io.github.manuzhang.rest
+
+import io.github.manuzhang.Utils.{Repo, languages}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future, blocking}
 import scala.util.{Failure, Success, Try}
-
-import Utils._
 
 object SearchRepos extends RestApp {
 

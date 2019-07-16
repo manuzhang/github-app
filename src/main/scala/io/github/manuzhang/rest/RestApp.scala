@@ -1,4 +1,4 @@
-package io.github.manuzhang
+package io.github.manuzhang.rest
 
 import org.rogach.scallop.ScallopConf
 import ujson.Value.Value
