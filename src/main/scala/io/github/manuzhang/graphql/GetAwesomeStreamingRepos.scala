@@ -3,7 +3,7 @@ package io.github.manuzhang.graphql
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-object GetAwesomeStreamingRepos extends GraphQlApp{
+object GetAwesomeStreamingRepos extends GraphQlApp {
 
   override def run():Unit = {
 
@@ -23,48 +23,49 @@ object GetAwesomeStreamingRepos extends GraphQlApp{
     val response = Await.result(runQuery(query), Duration.Inf)
     val readme = response.obj("repository").obj("object").obj("text").str
 
-    val regex = "https://github.com/([^/]+)/([^/)]+)".r
-    val repos = regex.findAllMatchIn(readme).collect {
-      case regex(owner, name) if name != "awesome" =>
-        owner -> name
-    }.toList
+    val fs = readme.split("\n").map(_.split(" - ")).collect {
+      case parts if parts.length == 2 =>
+        val link = parts(0)
+        val desc = parts(1)
 
-    val queryRepo =
-      """
-     query($owner: String!, $name: String!) {
-       repository(owner: $owner, name: $name) {
-         description
-         forks {
-           totalCount
-         }
-         stargazers {
-           totalCount
-         }
-         updatedAt
-       }
-     }
-  """.stripMargin
+        val queryRepo =
+          """
+           query($owner: String!, $name: String!) {
+             repository(owner: $owner, name: $name) {
+               forks {
+                 totalCount
+               }
+               stargazers {
+                 totalCount
+               }
+               pushedAt
+               isArchived
+             }
+           }
+        """.stripMargin
 
-    def getVariables(owner: String, name: String): String = {
-      ujson.Obj("owner" -> owner, "name" -> name).toString()
-    }
+        def getVariables(owner: String, name: String): String = {
+          ujson.Obj("owner" -> owner, "name" -> name).toString()
+        }
 
-    // val repoStr = repos.reduce(_ + "\n" + _)
-    // os.write.over(os.pwd / "awesome-streaming.txt", repoStr)
-
-    println(s"Found ${repos.length} repos")
-
-    val fs = repos.map { case (owner, name) =>
-          println(s"Fetching data from repo $owner:$name")
-      runQuery(queryRepo, getVariables(owner, name)).map { response =>
-        val repo = response.obj("repository")
-        repo.update("name", s"$owner/$name")
-        repo
-      }
-    }
+        val regex = "\\[([^\\[\\]]+)\\]\\(https://github.com/([^/]+)/([^/)]+)/?\\)".r
+        regex.findFirstMatchIn(link).collect { case regex(displayName, owner, name) =>
+          runQuery(queryRepo, getVariables(owner, name)).map { response =>
+            val repo = response.obj("repository")
+            ujson.Obj(
+              "name" -> displayName,
+              "link" -> s"https://github.com/$owner/$name",
+              "description" -> desc,
+              "stars" -> repo.obj("stargazers").obj("totalCount"),
+              "forks" -> repo.obj("forks").obj("totalCount"),
+              "lastUpdate" -> repo.obj("pushedAt"),
+              "isArchived" -> repo.obj("isArchived")
+            )
+          }
+        }
+    }.filter(_.nonEmpty).map(_.get).toList
 
     val json = Await.result(Future.sequence(fs), Duration.Inf).render(indent = 2)
     os.write.over(os.pwd / "awesome-streaming-repos.json", json)
   }
-
 }
