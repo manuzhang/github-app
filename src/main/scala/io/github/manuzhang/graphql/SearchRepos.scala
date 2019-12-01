@@ -50,7 +50,7 @@ object SearchRepos extends GraphQlApp {
     """.stripMargin
 
     val fs = Utils.languages.map { lang =>
-      runQuery(query, getVariables(lang)).map { response =>
+      runV4PostAsync(query, getVariables(lang)).map { response =>
         lang -> response.obj("search").obj("edges").arr.map { edge =>
           val node = edge.obj("node")
           Repo(fullName = node.obj("nameWithOwner").str,

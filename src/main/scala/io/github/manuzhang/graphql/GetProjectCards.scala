@@ -32,7 +32,7 @@ object GetProjectCards extends GraphQlApp {
         |}
         |""".stripMargin
 
-    val response = Await.result(runQuery(query), Duration.Inf)
+    val response = Await.result(runV4PostAsync(query), Duration.Inf)
     val columns = response.obj("repository").obj("project").obj("columns").obj("nodes").arr
     columns.foreach {
       col => if (col.obj("name").str == "Today") {

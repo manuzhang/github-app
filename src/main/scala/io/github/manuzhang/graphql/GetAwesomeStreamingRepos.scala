@@ -6,22 +6,7 @@ import scala.concurrent.{Await, Future}
 object GetAwesomeStreamingRepos extends GraphQlApp {
 
   override def run():Unit = {
-
-    val query =
-      """
-     query {
-       repository(owner: "manuzhang", name: "awesome-streaming") {
-         object(expression: "master:README.md") {
-           ... on Blob {
-             text
-           }
-         }
-       }
-     }
-  """.stripMargin
-
-    val response = Await.result(runQuery(query), Duration.Inf)
-    val readme = response.obj("repository").obj("object").obj("text").str
+    val readme = getReadme("manuzhang", "awesome-streaming")
 
     val fs = readme.split("\n").map(_.split(" - ")).collect {
       case parts if parts.length == 2 =>
@@ -38,19 +23,23 @@ object GetAwesomeStreamingRepos extends GraphQlApp {
                stargazers {
                  totalCount
                }
+               refs(refPrefix: "refs/tags/", first: 1, orderBy: {field: TAG_COMMIT_DATE, direction: DESC}) {
+                 nodes {
+                   name
+                 }
+               }
                pushedAt
                isArchived
              }
            }
-        """.stripMargin
+          """.stripMargin
 
-        def getVariables(owner: String, name: String): String = {
-          ujson.Obj("owner" -> owner, "name" -> name).toString()
-        }
+
 
         val regex = "\\[([^\\[\\]]+)\\]\\(https://github.com/([^/]+)/([^/)]+)/?\\)".r
         regex.findFirstMatchIn(link).collect { case regex(displayName, owner, name) =>
-          runQuery(queryRepo, getVariables(owner, name)).map { response =>
+
+          runV4PostAsync(queryRepo, getVariables(owner, name)).map { response =>
             val repo = response.obj("repository")
             ujson.Obj(
               "name" -> displayName,
@@ -58,14 +47,39 @@ object GetAwesomeStreamingRepos extends GraphQlApp {
               "description" -> desc,
               "stars" -> repo.obj("stargazers").obj("totalCount"),
               "forks" -> repo.obj("forks").obj("totalCount"),
+              "lastTag" -> repo.obj("refs").obj("nodes").arr.headOption
+                .map(_.obj("name")).getOrElse(ujson.Str("")),
               "lastUpdate" -> repo.obj("pushedAt"),
               "isArchived" -> repo.obj("isArchived")
             )
           }
         }
+        // TODO: what is this ?
     }.filter(_.nonEmpty).map(_.get).toList
 
     val json = Await.result(Future.sequence(fs), Duration.Inf).render(indent = 2)
     os.write.over(os.pwd / "awesome-streaming-repos.json", json)
+  }
+
+  def getReadme(owner: String, name: String): String = {
+    val query =
+      """
+       query($owner: String!, $name: String!) {
+         repository(owner: $owner, name: $name) {
+           object(expression: "master:README.md") {
+             ... on Blob {
+               text
+             }
+           }
+         }
+       }
+      """.stripMargin
+
+    val response = runV4Post(query, getVariables(owner, name))
+    response.obj("repository").obj("object").obj("text").str
+  }
+
+  def getVariables(owner: String, name: String): String = {
+    ujson.Obj("owner" -> owner, "name" -> name).toString()
   }
 }
