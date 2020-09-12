@@ -21,4 +21,8 @@ object Utils {
       readme.nonEmpty && topics.nonEmpty
     }
   }
+
+  def getFirstNode(obj: ujson.Value): Option[ujson.Value] = {
+    obj("nodes").arr.headOption
+  }
 }

@@ -1,5 +1,7 @@
 package io.github.manuzhang.graphql
 
+import io.github.manuzhang.Utils.getFirstNode
+
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
@@ -28,6 +30,11 @@ object GetAwesomeStreamingRepos extends GraphQlApp {
                    name
                  }
                }
+               commitComments(last: 1) {
+                 nodes {
+                   publishedAt
+                 }
+               }
                pushedAt
                isArchived
              }
@@ -47,9 +54,10 @@ object GetAwesomeStreamingRepos extends GraphQlApp {
               "description" -> desc,
               "stars" -> repo.obj("stargazers").obj("totalCount"),
               "forks" -> repo.obj("forks").obj("totalCount"),
-              "lastTag" -> repo.obj("refs").obj("nodes").arr.headOption
+              "lastTag" -> getFirstNode(repo.obj("refs"))
                 .map(_.obj("name")).getOrElse(ujson.Str("")),
-              "lastUpdate" -> repo.obj("pushedAt"),
+              "lastUpdate" -> getFirstNode(repo.obj("commitComments")).map(_.obj("publishedAt"))
+                .getOrElse(repo.obj("pushedAt")),
               "isArchived" -> repo.obj("isArchived")
             )
           }
