@@ -30,9 +30,15 @@ object GetAwesomeStreamingRepos extends GraphQlApp {
                    name
                  }
                }
-               commitComments(last: 1) {
-                 nodes {
-                   publishedAt
+               defaultBranchRef {
+                 target {
+                   ... on Commit {
+                     history(first: 1) {
+                       nodes {
+                         pushedDate
+                       }
+                     }
+                   }
                  }
                }
                pushedAt
@@ -56,8 +62,8 @@ object GetAwesomeStreamingRepos extends GraphQlApp {
               "forks" -> repo.obj("forks").obj("totalCount"),
               "lastTag" -> getFirstNode(repo.obj("refs"))
                 .map(_.obj("name")).getOrElse(ujson.Str("")),
-              "lastUpdate" -> getFirstNode(repo.obj("commitComments")).map(_.obj("publishedAt"))
-                .getOrElse(repo.obj("pushedAt")),
+              "lastUpdate" -> getFirstNode(repo.obj("defaultBranchRef").obj("target").obj("history"))
+                .map(_.obj("pushedDate").str).getOrElse(repo.obj("pushedAt").str),
               "isArchived" -> repo.obj("isArchived")
             )
           }
