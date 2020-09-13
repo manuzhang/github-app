@@ -63,7 +63,7 @@ object GetAwesomeStreamingRepos extends GraphQlApp {
               "lastTag" -> getFirstNode(repo.obj("refs"))
                 .map(_.obj("name")).getOrElse(ujson.Str("")),
               "lastUpdate" -> getFirstNode(repo.obj("defaultBranchRef").obj("target").obj("history"))
-                .map(_.obj("pushedDate").str).getOrElse(repo.obj("pushedAt").str),
+                .map(_.obj("pushedDate")).getOrElse(repo.obj("pushedAt")),
               "isArchived" -> repo.obj("isArchived")
             )
           }
