@@ -37,9 +37,7 @@ trait GraphQlApp extends App {
   }
 
   def runV4Post(query: String, variables: String = ""): Value = {
-    val response = requests.post(s"$endpointV4",
-      headers = Map("Authorization" -> s"bearer $authToken"),
-      data = ujson.Obj("query" -> query, "variables" -> variables).toString())
+    val response = request(query, variables)
     parseResponse(response).obj("data")
   }
 
@@ -47,6 +45,12 @@ trait GraphQlApp extends App {
     runAsync {
       runV4Post(query, variables)
     }
+  }
+
+  def request(query: String, variables: String = ""): Response = {
+    requests.post(s"$endpointV4",
+      headers = Map("Authorization" -> s"bearer $authToken"),
+      data = ujson.Obj("query" -> query, "variables" -> variables).toString())
   }
 
   def parseResponse(response: Response): Value = {

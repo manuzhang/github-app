@@ -1,0 +1,45 @@
+query GetStarredRepos($cursor: String!) {
+  user(login: "manuzhang") {
+    starredRepositories(after: $cursor) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        ... on Repository {
+          nameWithOwner
+          description
+          primaryLanguage {
+            name
+          }
+          defaultBranchRef {
+            target {
+              ... on Commit {
+                history(first: 1) {
+                  nodes {
+                    pushedDate
+                  }
+                }
+              }
+            }
+          }
+          stargazers {
+            totalCount
+          }
+          forks {
+            totalCount
+          }
+          repositoryTopics(first: 5) {
+            nodes {
+              ... on RepositoryTopic {
+                topic {
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
