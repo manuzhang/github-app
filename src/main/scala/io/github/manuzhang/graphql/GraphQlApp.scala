@@ -6,6 +6,10 @@ import ujson.Value
 
 import scala.concurrent.{ExecutionContext, Future, blocking}
 
+object GraphQlApp {
+  type DateTime = String
+}
+
 trait GraphQlApp extends App {
 
   val endpointV3 = "https://api.github.com"

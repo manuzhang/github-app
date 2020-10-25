@@ -1,7 +1,5 @@
 name := "github-stars"
-
 version := "0.1.0"
-
 scalaVersion := "2.12.11"
 
 libraryDependencies ++= Seq(
@@ -15,3 +13,4 @@ libraryDependencies ++= Seq(
 
 enablePlugins(GraphQLCodegenPlugin)
 graphqlCodegenSchema := (resourceDirectory in Compile).value / "github-schema.graphql"
+graphqlCodegenImports := Seq("io.github.manuzhang.graphql.GraphQlApp.DateTime")
