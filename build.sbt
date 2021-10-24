@@ -3,7 +3,7 @@ version := "0.1.0"
 scalaVersion := "2.12.11"
 
 libraryDependencies ++= Seq(
-  "com.lihaoyi" %% "upickle" % "0.7.5",
+  "com.lihaoyi" %% "upickle" % "0.9.9",
   "com.lihaoyi" %% "requests" % "0.1.8",
   "com.lihaoyi" %% "os-lib" % "0.2.7",
   "com.lihaoyi" %% "scalatags" % "0.7.0",
