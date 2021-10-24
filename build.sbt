@@ -1,6 +1,6 @@
 name := "github-stars"
 version := "0.1.0"
-scalaVersion := "2.12.11"
+scalaVersion := "2.12.15"
 
 libraryDependencies ++= Seq(
   "com.lihaoyi" %% "upickle" % "0.7.5",
