@@ -12,14 +12,11 @@ trait RestApp extends App {
     val clientId = opt[String](required = true)
   }
 
-  override def main(args: Array[String]): Unit = {
-    val conf = new Conf(args)
-    conf.verify()
-    run(conf)
-  }
+  val conf = new Conf(args)
+  conf.verify()
+  run(conf)
 
   def run(conf: Conf): Unit
-
 
   def get(url: String,
       conf: Conf,

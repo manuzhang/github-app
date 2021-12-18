@@ -21,12 +21,10 @@ trait GraphQlApp extends App {
     val authToken = opt[String](required = true)
   }
 
-  override def main(args: Array[String]): Unit = {
-    val conf = new Conf(args)
-    conf.verify()
-    authToken = conf.authToken()
-    run()
-  }
+  val conf = new Conf(args)
+  conf.verify()
+  authToken = conf.authToken()
+  run()
 
   implicit val executionContext: ExecutionContext = ExecutionContext.global
 
