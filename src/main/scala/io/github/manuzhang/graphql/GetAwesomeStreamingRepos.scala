@@ -4,6 +4,7 @@ import io.github.manuzhang.Utils.getFirstNode
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success, Try}
 
 object GetAwesomeStreamingRepos extends GraphQlApp {
 
@@ -52,23 +53,31 @@ object GetAwesomeStreamingRepos extends GraphQlApp {
         val regex = "\\[([^\\[\\]]+)\\]\\(https://github.com/([^/]+)/([^/)]+)/?\\)".r
         regex.findFirstMatchIn(link).collect { case regex(displayName, owner, name) =>
 
-          runV4PostAsync(queryRepo, getVariables(owner, name)).map { response =>
-            val repo = response.obj("repository")
-            ujson.Obj(
-              "name" -> displayName,
-              "link" -> s"https://github.com/$owner/$name",
-              "description" -> desc,
-              "stars" -> repo.obj("stargazers").obj("totalCount"),
-              "forks" -> repo.obj("forks").obj("totalCount"),
-              "lastTag" -> getFirstNode(repo.obj("refs"))
-                .map(_.obj("name")).getOrElse(ujson.Str("")),
-              "lastUpdate" -> getFirstNode(repo.obj("defaultBranchRef").obj("target").obj("history"))
-                .map(_.obj("pushedDate")).getOrElse(repo.obj("pushedAt")),
-              "isArchived" -> repo.obj("isArchived")
-            )
+          runV4PostAsync(queryRepo, getVariables(owner, name)).collect {
+            case response if response != ujson.Null =>
+              val repo = response.obj("repository")
+              Try {
+                ujson.Obj(
+                  "name" -> displayName,
+                  "link" -> s"https://github.com/$owner/$name",
+                  "description" -> desc,
+                  "stars" -> repo.obj("stargazers").obj("totalCount").num,
+                  "forks" -> repo.obj("forks").obj("totalCount").num,
+                  "lastTag" -> getFirstNode(repo.obj("refs"))
+                    .map(_.obj("name")).getOrElse(ujson.Str("")),
+                  "lastUpdate" -> getFirstNode(repo.obj("defaultBranchRef").obj("target").obj("history"))
+                    .map(_.obj("pushedDate")).getOrElse(repo.obj("pushedAt")),
+                  "isArchived" -> repo.obj("isArchived")
+                )
+              } match {
+                case Success(v) => v
+                case Failure(e) =>
+                  println(s"$owner,$name,$response")
+                  throw e
+              }
           }
         }
-        // TODO: what is this ?
+      // TODO: what is this ?
     }.filter(_.nonEmpty).map(_.get).toList
 
     val json = Await.result(Future.sequence(fs), Duration.Inf).render(indent = 2)

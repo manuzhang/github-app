@@ -4,7 +4,7 @@ import org.rogach.scallop.ScallopConf
 import requests.Response
 import ujson.Value
 
-import scala.concurrent.{ExecutionContext, Future, blocking}
+import scala.concurrent.{blocking, ExecutionContext, Future}
 
 object GraphQlApp {
   type DateTime = String
@@ -41,8 +41,8 @@ trait GraphQlApp extends App {
   }
 
   def runV4Post(query: String, variables: String = ""): Value = {
-    val response = request(query, variables)
-    parseResponse(response).obj("data")
+    val resp = parseResponse(request(query, variables))
+    resp.obj("data")
   }
 
   def runV4PostAsync(query: String, variables: String = ""): Future[Value] = {
